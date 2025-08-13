@@ -1,2 +1,1 @@
-# Example
-An example greeter plugin
+*🚧 This plugin is a **Work in Progress** 🚧
