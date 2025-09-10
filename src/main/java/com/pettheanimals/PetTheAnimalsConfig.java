@@ -22,8 +22,28 @@ public interface PetTheAnimalsConfig extends Config
 		name = "Enable Overhead Text",
 		description = "Show the pet message above your player."
 	)
-	default boolean enableOverheadText()
-	{
-		return true;
-	}
+        default boolean enableOverheadText()
+        {
+                return true;
+        }
+
+        @ConfigItem(
+                keyName = "petDistance",
+                name = "Max Distance",
+                description = "Maximum tiles away you can be to pet an NPC."
+        )
+        default int petDistance()
+        {
+                return 2;
+        }
+
+        @ConfigItem(
+                keyName = "additionalNpcNames",
+                name = "Additional NPCs",
+                description = "Comma-separated list of extra NPC names that can be petted."
+        )
+        default String additionalNpcNames()
+        {
+                return "";
+        }
 }
