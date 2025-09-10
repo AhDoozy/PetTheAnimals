@@ -49,71 +49,35 @@ public interface PetTheAnimalsConfig extends Config
     }
 
     @ConfigSection(
-            name = "Custom Pet Lines",
-            description = "Messages that replace the built-in flavour text.",
+            name = "Pet Responses",
+            description = "Customize animal dialogue.",
             position = 98,
             closedByDefault = true
     )
-    String customLinesSection = "customLinesSection";
+    String petLinesSection = "petLinesSection";
 
     @ConfigItem(
-            keyName = "customLine1",
-            name = "Line 1",
-            description = "Custom message used when petting.",
-            section = customLinesSection,
+            keyName = "linesSummary",
+            name = "Summary",
+            description = "Overview of customised animals.",
+            section = petLinesSection,
             position = 0
     )
-    default String customLine1()
+    default String linesSummary()
     {
-        return "";
+        return "Using defaults";
     }
 
     @ConfigItem(
-            keyName = "customLine2",
-            name = "Line 2",
-            description = "Custom message used when petting.",
-            section = customLinesSection,
+            keyName = "editPetLines",
+            name = "Edit Responses",
+            description = "Open a popup to edit pet lines.",
+            section = petLinesSection,
             position = 1
     )
-    default String customLine2()
+    default net.runelite.client.config.Button editPetLines()
     {
-        return "";
-    }
-
-    @ConfigItem(
-            keyName = "customLine3",
-            name = "Line 3",
-            description = "Custom message used when petting.",
-            section = customLinesSection,
-            position = 2
-    )
-    default String customLine3()
-    {
-        return "";
-    }
-
-    @ConfigItem(
-            keyName = "customLine4",
-            name = "Line 4",
-            description = "Custom message used when petting.",
-            section = customLinesSection,
-            position = 3
-    )
-    default String customLine4()
-    {
-        return "";
-    }
-
-    @ConfigItem(
-            keyName = "customLine5",
-            name = "Line 5",
-            description = "Custom message used when petting.",
-            section = customLinesSection,
-            position = 4
-    )
-    default String customLine5()
-    {
-        return "";
+        return new net.runelite.client.config.Button();
     }
 }
 
