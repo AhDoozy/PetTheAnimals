@@ -53,6 +53,7 @@ public class PetTheAnimalsPlugin extends Plugin
     @Override
     protected void startUp() throws Exception
     {
+        registerPetMenu();
         log.info("Pet the Animals started");
     }
 
@@ -63,6 +64,7 @@ public class PetTheAnimalsPlugin extends Plugin
             clearOverheadTask.cancel(true);
         }
         scheduler.shutdownNow();
+        unregisterPetMenu();
         log.info("Pet the Animals stopped");
     }
 
@@ -221,7 +223,7 @@ public class PetTheAnimalsPlugin extends Plugin
         }
         // Remove level suffixes and trim
         String name = npcName.replaceAll("\\s*\\(level-?\\d+\\)\\s*", "").trim();
-        // Case-insensitive exact match against our whitelist
+        // Case-insensitive exact match against our built-in whitelist
         for (String allowed : PetResponses.WHITELISTED_NPCS)
         {
             if (allowed.equalsIgnoreCase(name))
@@ -229,6 +231,21 @@ public class PetTheAnimalsPlugin extends Plugin
                 return true;
             }
         }
+
+        // Allow user-defined additional names from configuration
+        String extra = config.additionalNpcNames();
+        if (extra != null && !extra.trim().isEmpty())
+        {
+            String[] split = extra.split(",");
+            for (String s : split)
+            {
+                if (name.equalsIgnoreCase(s.trim()))
+                {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -426,7 +443,7 @@ public class PetTheAnimalsPlugin extends Plugin
             {
                 WorldPoint me = client.getLocalPlayer().getWorldLocation();
                 WorldPoint them = npc.getWorldLocation();
-                if (!withinTiles(me, them, 2))
+                if (!withinTiles(me, them, config.petDistance()))
                 {
                     client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You need to be closer to do that.", null);
                     event.consume();
