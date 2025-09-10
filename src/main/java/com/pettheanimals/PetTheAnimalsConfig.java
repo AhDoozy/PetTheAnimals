@@ -46,4 +46,15 @@ public interface PetTheAnimalsConfig extends Config
         {
                 return "";
         }
+
+        @ConfigItem(
+                keyName = "customPetLines",
+                name = "Custom Pet Lines",
+                description = "Comma-separated messages used when petting. Overrides built-in lines.",
+                position = 99
+        )
+        default String customPetLines()
+        {
+                return "";
+        }
 }

@@ -19,6 +19,7 @@ The plugin exposes several options in the RuneLite configuration panel:
 | Enable Overhead Text | Show message over your player. |
 | Max Distance | Maximum number of tiles you can be from the NPC (default 2). |
 | Additional NPCs | Extra comma-separated NPC names that are allowed to be petted. |
+| Custom Pet Lines | Comma-separated messages that replace the built-in flavour text. |
 
 ## Building
 This is a standard RuneLite plugin and can be built with `./gradlew build`.

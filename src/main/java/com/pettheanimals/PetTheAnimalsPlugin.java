@@ -452,7 +452,7 @@ public class PetTheAnimalsPlugin extends Plugin
             }
         }
 
-        final String line = PetResponses.buildLine(rawName);
+        final String line = PetResponses.buildLine(rawName, config.customPetLines());
 
         // Show overhead text and optional chat message
         if (config.enableOverheadText() && client.getLocalPlayer() != null)

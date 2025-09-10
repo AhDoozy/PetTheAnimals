@@ -118,10 +118,28 @@ public final class PetResponses
 
     private PetResponses() { }
 
-    public static String buildLine(String npcName)
+    public static String buildLine(String npcName, String customLines)
     {
         final String name = npcName == null ? "creature" : npcName;
         final String key = name.toLowerCase(Locale.ROOT);
+
+        if (customLines != null && !customLines.trim().isEmpty())
+        {
+            java.util.List<String> userLines = new java.util.ArrayList<>();
+            for (String line : customLines.split("[\\n,]"))
+            {
+                String trimmed = line.trim();
+                if (!trimmed.isEmpty())
+                {
+                    userLines.add(trimmed);
+                }
+            }
+            if (!userLines.isEmpty())
+            {
+                return userLines.get(new java.util.Random().nextInt(userLines.size()));
+            }
+        }
+
         for (Map.Entry<String, java.util.List<String>> e : RESPONSES.entrySet())
         {
             if (key.contains(e.getKey()))
