@@ -9,7 +9,7 @@ public class PetResponsesTest
     @Test
     public void testCustomLineOverridesDefault()
     {
-        String custom = "Custom line";
+        java.util.List<String> custom = java.util.Collections.singletonList("Custom line");
         String result = PetResponses.buildLine("dog", custom);
         assertEquals("Custom line", result);
     }

@@ -23,6 +23,8 @@ import java.util.function.Predicate;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @PluginDescriptor(
@@ -435,37 +437,39 @@ public class PetTheAnimalsPlugin extends Plugin
             return;
         }
 
+        NPC npc = getNpcByIndex(event.getId());
+
         // Require player to be within 2 tiles of the target NPC
-        if (client.getLocalPlayer() != null)
+        if (client.getLocalPlayer() != null && npc != null)
         {
-            NPC npc = getNpcByIndex(event.getId());
-            if (npc != null)
+            WorldPoint me = client.getLocalPlayer().getWorldLocation();
+            WorldPoint them = npc.getWorldLocation();
+            if (!withinTiles(me, them, config.petDistance()))
             {
-                WorldPoint me = client.getLocalPlayer().getWorldLocation();
-                WorldPoint them = npc.getWorldLocation();
-                if (!withinTiles(me, them, config.petDistance()))
-                {
-                    client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You need to be closer to do that.", null);
-                    event.consume();
-                    return;
-                }
+                client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You need to be closer to do that.", null);
+                event.consume();
+                return;
             }
         }
 
-        final String line = PetResponses.buildLine(rawName, config.customPetLines());
+        List<String> customLines = new ArrayList<>();
+        if (!config.customLine1().trim().isEmpty()) { customLines.add(config.customLine1().trim()); }
+        if (!config.customLine2().trim().isEmpty()) { customLines.add(config.customLine2().trim()); }
+        if (!config.customLine3().trim().isEmpty()) { customLines.add(config.customLine3().trim()); }
+        if (!config.customLine4().trim().isEmpty()) { customLines.add(config.customLine4().trim()); }
+        if (!config.customLine5().trim().isEmpty()) { customLines.add(config.customLine5().trim()); }
+
+        final String line = PetResponses.buildLine(rawName, customLines);
 
         // Show overhead text and optional chat message
-        if (config.enableOverheadText() && client.getLocalPlayer() != null)
+        if (config.enableOverheadText() && npc != null)
         {
-            client.getLocalPlayer().setOverheadText(line);
+            npc.setOverheadText(line);
             if (clearOverheadTask != null && !clearOverheadTask.isDone()) {
                 clearOverheadTask.cancel(true);
             }
-            clearOverheadTask = scheduler.schedule(() -> {
-                if (client.getLocalPlayer() != null) {
-                    client.getLocalPlayer().setOverheadText(null);
-                }
-            }, OVERHEAD_TEXT_DURATION_MS, TimeUnit.MILLISECONDS);
+            final NPC npcToClear = npc;
+            clearOverheadTask = scheduler.schedule(() -> npcToClear.setOverheadText(null), OVERHEAD_TEXT_DURATION_MS, TimeUnit.MILLISECONDS);
         }
 
         if (config.enableChatMessage())
