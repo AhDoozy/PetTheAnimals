@@ -1,5 +1,6 @@
 package com.pettheanimals;
 
+import net.runelite.client.config.Button;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -75,9 +76,9 @@ public interface PetTheAnimalsConfig extends Config
             section = petLinesSection,
             position = 1
     )
-    default net.runelite.client.config.Button editPetLines()
+    default Button editPetLines()
     {
-        return new net.runelite.client.config.Button();
+        return new Button();
     }
 }
 
