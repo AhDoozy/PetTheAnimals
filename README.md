@@ -16,9 +16,10 @@ The plugin exposes several options in the RuneLite configuration panel:
 | Option | Description |
 | --- | --- |
 | Enable Chat Message | Send pet message to chatbox. |
-| Enable Overhead Text | Show message over your player. |
+| Enable Overhead Text | Show message over the pet. |
 | Max Distance | Maximum number of tiles you can be from the NPC (default 2). |
 | Additional NPCs | Extra comma-separated NPC names that are allowed to be petted. |
+| Pet Responses | Collapsible section with a summary and a popup editor for per-animal lines. |
 
 ## Building
 This is a standard RuneLite plugin and can be built with `./gradlew build`.

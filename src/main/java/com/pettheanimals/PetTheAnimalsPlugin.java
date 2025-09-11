@@ -13,16 +13,23 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigButtonClicked;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.menus.MenuManager;
 import net.runelite.client.util.Text;
 
+import javax.swing.*;
+import java.awt.BorderLayout;
 import java.lang.reflect.Method;
 import java.util.function.Predicate;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Slf4j
 @PluginDescriptor(
@@ -54,6 +61,7 @@ public class PetTheAnimalsPlugin extends Plugin
     protected void startUp() throws Exception
     {
         registerPetMenu();
+        updateSummary();
         log.info("Pet the Animals started");
     }
 
@@ -435,37 +443,33 @@ public class PetTheAnimalsPlugin extends Plugin
             return;
         }
 
+        NPC npc = getNpcByIndex(event.getId());
+
         // Require player to be within 2 tiles of the target NPC
-        if (client.getLocalPlayer() != null)
+        if (client.getLocalPlayer() != null && npc != null)
         {
-            NPC npc = getNpcByIndex(event.getId());
-            if (npc != null)
+            WorldPoint me = client.getLocalPlayer().getWorldLocation();
+            WorldPoint them = npc.getWorldLocation();
+            if (!withinTiles(me, them, config.petDistance()))
             {
-                WorldPoint me = client.getLocalPlayer().getWorldLocation();
-                WorldPoint them = npc.getWorldLocation();
-                if (!withinTiles(me, them, config.petDistance()))
-                {
-                    client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You need to be closer to do that.", null);
-                    event.consume();
-                    return;
-                }
+                client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You need to be closer to do that.", null);
+                event.consume();
+                return;
             }
         }
 
-        final String line = PetResponses.buildLine(rawName);
+        List<String> customLines = getCustomLinesFor(rawName);
+        final String line = PetResponses.buildLine(rawName, customLines);
 
         // Show overhead text and optional chat message
-        if (config.enableOverheadText() && client.getLocalPlayer() != null)
+        if (config.enableOverheadText() && npc != null)
         {
-            client.getLocalPlayer().setOverheadText(line);
+            npc.setOverheadText(line);
             if (clearOverheadTask != null && !clearOverheadTask.isDone()) {
                 clearOverheadTask.cancel(true);
             }
-            clearOverheadTask = scheduler.schedule(() -> {
-                if (client.getLocalPlayer() != null) {
-                    client.getLocalPlayer().setOverheadText(null);
-                }
-            }, OVERHEAD_TEXT_DURATION_MS, TimeUnit.MILLISECONDS);
+            final NPC npcToClear = npc;
+            clearOverheadTask = scheduler.schedule(() -> npcToClear.setOverheadText(null), OVERHEAD_TEXT_DURATION_MS, TimeUnit.MILLISECONDS);
         }
 
         if (config.enableChatMessage())
@@ -481,5 +485,108 @@ public class PetTheAnimalsPlugin extends Plugin
     PetTheAnimalsConfig provideConfig(ConfigManager configManager)
     {
         return configManager.getConfig(PetTheAnimalsConfig.class);
+    }
+
+    @Subscribe
+    public void onConfigButtonClicked(ConfigButtonClicked event)
+    {
+        if (!"pettheanimals".equals(event.getGroup()) || !"editPetLines".equals(event.getKey()))
+        {
+            return;
+        }
+
+        SwingUtilities.invokeLater(this::openEditor);
+    }
+
+    private void openEditor()
+    {
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Pet Responses");
+
+        String[] keys = PetResponses.getAnimals().stream().sorted().toArray(String[]::new);
+        JComboBox<String> combo = new JComboBox<>(keys);
+        JTextArea area = new JTextArea(5, 20);
+
+        combo.addActionListener(e -> {
+            String sel = (String) combo.getSelectedItem();
+            String stored = configManager.getConfiguration("pettheanimals", "line." + sel);
+            if (stored == null || stored.isEmpty())
+            {
+                area.setText(String.join("\n", PetResponses.getDefaults(sel)));
+            }
+            else
+            {
+                area.setText(stored.replace('|', '\n'));
+            }
+        });
+
+        JButton save = new JButton("Save");
+        save.addActionListener(e -> {
+            String sel = (String) combo.getSelectedItem();
+            String text = Arrays.stream(area.getText().split("\n"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.joining("|"));
+            configManager.setConfiguration("pettheanimals", "line." + sel, text);
+            updateSummary();
+        });
+
+        JButton close = new JButton("Close");
+        close.addActionListener(e -> dialog.dispose());
+
+        JPanel buttons = new JPanel();
+        buttons.add(save);
+        buttons.add(close);
+
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.add(combo, BorderLayout.NORTH);
+        panel.add(new JScrollPane(area), BorderLayout.CENTER);
+        panel.add(buttons, BorderLayout.SOUTH);
+
+        dialog.getContentPane().add(panel);
+        combo.setSelectedIndex(0);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+
+    private List<String> getCustomLinesFor(String npcName)
+    {
+        if (npcName == null)
+        {
+            return java.util.Collections.emptyList();
+        }
+
+        String key = npcName.toLowerCase(Locale.ROOT);
+        for (String k : PetResponses.getAnimals())
+        {
+            if (key.contains(k))
+            {
+                String stored = configManager.getConfiguration("pettheanimals", "line." + k);
+                if (stored != null && !stored.trim().isEmpty())
+                {
+                    return Arrays.stream(stored.split("\\|"))
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .collect(Collectors.toList());
+                }
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    private void updateSummary()
+    {
+        int count = 0;
+        for (String k : PetResponses.getAnimals())
+        {
+            String stored = configManager.getConfiguration("pettheanimals", "line." + k);
+            if (stored != null && !stored.trim().isEmpty())
+            {
+                count++;
+            }
+        }
+        String summary = count == 0 ? "Using defaults" : count + " customised";
+        configManager.setConfiguration("pettheanimals", "linesSummary", summary);
     }
 }

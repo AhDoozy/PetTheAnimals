@@ -29,7 +29,7 @@ public final class PetResponses
         "Seagull"
     ));
 
-    private static final Map<String, java.util.List<String>> RESPONSES;
+    static final Map<String, java.util.List<String>> RESPONSES;
     static
     {
         Map<String, java.util.List<String>> m = new HashMap<>();
@@ -118,10 +118,16 @@ public final class PetResponses
 
     private PetResponses() { }
 
-    public static String buildLine(String npcName)
+    public static String buildLine(String npcName, java.util.List<String> customLines)
     {
         final String name = npcName == null ? "creature" : npcName;
         final String key = name.toLowerCase(Locale.ROOT);
+
+        if (customLines != null && !customLines.isEmpty())
+        {
+            return customLines.get(new java.util.Random().nextInt(customLines.size()));
+        }
+
         for (Map.Entry<String, java.util.List<String>> e : RESPONSES.entrySet())
         {
             if (key.contains(e.getKey()))
@@ -133,5 +139,15 @@ public final class PetResponses
             }
         }
         return "You gently pet the " + name.toLowerCase(Locale.ROOT) + ".";
+    }
+
+    public static java.util.Set<String> getAnimals()
+    {
+        return RESPONSES.keySet();
+    }
+
+    public static java.util.List<String> getDefaults(String key)
+    {
+        return RESPONSES.getOrDefault(key, java.util.Collections.emptyList());
     }
 }
